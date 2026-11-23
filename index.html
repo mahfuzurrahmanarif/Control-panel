@@ -517,6 +517,12 @@ body{overflow-x:hidden;padding-bottom:104px}
 .pvcard>div:first-child{flex:1;min-width:0}
 .pvcard b{display:block;font-size:13.5px;color:#4a5f5d}
 .pvcard small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.pvg{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#e6f0ef;border:1px solid #cfe0de;border-left:4px solid #0b6968;padding:11px 12px;margin-bottom:8px;font:inherit;color:inherit;cursor:pointer;border-radius:0}
+.pvg>span:first-child{flex:1;min-width:0}
+.pvg b{display:block;font-size:12.5px;letter-spacing:.04em;color:#0b6968}
+.pvg small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.pvg .cv{width:9px;height:9px;border-right:2px solid #0b6968;border-bottom:2px solid #0b6968;transform:rotate(-45deg);flex:none;margin-right:4px}
+.pvg.o .cv{transform:rotate(45deg)}
 .pvb{display:flex;gap:6px;flex:none}
 .pvb .sb{padding:7px 10px;font-size:12px}
 [hidden]{display:none!important}
@@ -940,8 +946,7 @@ function renderReceipt() {
     '<div class="no">Receipt no.<br><b>SPC-' + String(i + 1).padStart(2, '0') + '</b>' + (full ? '<br><span class="stamp">PAID IN FULL</span>' : '') + '</div></div>' +
     '<div class="sum"><div><span>Goal</span><b>' + fmt(t) + '</b></div><div class="ok"><span>Paid</span><b>' + fmt(paid) + '</b></div><div><span>Remaining</span><b>' + fmt(Math.max(0, t - paid)) + '</b></div></div>' +
     '<div class="rbar"><i style="width:' + Math.min(100, paid / t * 100) + '%"></i></div>' +
-    (list.length ? '<table><thead><tr><th>#</th><th>Date</th><th class="r">Amount</th><th>Method</th><th>Received by</th></tr></thead><tbody>' + rows + '</tbody></table>' +
-      '<div class="tfoot"><span>Total paid</span><span>' + fmt(paid) + ' BDT</span></div>' : '<div class="empty">No payments recorded yet.</div>') +
+    (list.length ? '<table><thead><tr><th>#</th><th>Date</th><th class="r">Amount</th><th>Method</th><th>Received by</th></tr></thead><tbody>' + rows + '</tbody></table>' : '<div class="empty">No payments recorded yet.</div>') +
     '<div class="sig"><div></div><div><div class="sg"><img alt="" src="' + SIGD + '"></div><i></i>Group Lead</div></div>' +
     '</div><footer><div class="auth">Authorised by SHOPNOCHOYA GROUP</div><div class="upd">Issued: ' + fmtLong(c.updated) + '</div></footer>';
 }
@@ -1333,8 +1338,7 @@ function renderReceipt() {
     '<div class="no">Receipt no.<br><b>SGAS-' + String(i + 1).padStart(2, '0') + '</b>' + (full ? '<br><span class="stamp">PAID IN FULL</span>' : '') + '</div></div>' +
     '<div class="sum"><div><span>Goal</span><b>' + fmt(t) + '</b></div><div class="ok"><span>Paid</span><b>' + fmt(paid) + '</b></div><div><span>Remaining</span><b>' + fmt(Math.max(0, t - paid)) + '</b></div></div>' +
     '<div class="rbar"><i style="width:' + Math.min(100, paid / t * 100) + '%"></i></div>' +
-    (list.length ? '<table><thead><tr><th>#</th><th>Date</th><th class="r">Amount</th><th>Method</th><th>Received by</th></tr></thead><tbody>' + rows + '</tbody></table>' +
-      '<div class="tfoot"><span>Total paid</span><span>' + fmt(paid) + ' BDT</span></div>' : '<div class="empty">No payments recorded yet.</div>') +
+    (list.length ? '<table><thead><tr><th>#</th><th>Date</th><th class="r">Amount</th><th>Method</th><th>Received by</th></tr></thead><tbody>' + rows + '</tbody></table>' : '<div class="empty">No payments recorded yet.</div>') +
     '<div class="sig"><div></div><div><div class="sg"><img alt="" src="' + SIGD + '"></div><i></i>Group Lead</div></div>' +
     '</div><footer><div class="auth">Authorised by SHOPNOCHOYA GROUP</div><div class="upd">Issued: ' + fmtLong(c.updated) + '</div></footer>';
 }
@@ -1667,7 +1671,7 @@ function normM(d) {
 let M = null;
 try { M = normM(JSON.parse(localStorage.getItem(KEYM))); } catch (e) {}
 if (!M) { const t = new Date(); M = { names: FULL.slice(), amount: 1000, months: [mkMonth(t.getMonth(), t.getFullYear(), 1000, dueDefault(t.getMonth(), t.getFullYear()))], bkAt: null, bkN: 0, lastMeth: 'Cash', lastTo: '', ranks: {} }; }
-let VIEWM = null, MTAB = 'update', PROG = 'home', pmSel = 'Cash';
+let VIEWM = null, MTAB = 'update', PROG = 'home', pmSel = 'Cash', MGST = {};
 const mCur = () => M.months[M.months.length - 1];
 const mCtx = () => { if (VIEWM !== null) { const x = M.months.find(m => m.id === VIEWM); if (x && x !== mCur()) return x; VIEWM = null; document.body.classList.remove('marc'); } return mCur(); };
 const mLive = () => mCtx() === mCur();
@@ -1750,7 +1754,13 @@ function mRenderMonths() {
   const dots = M.names.map((x, i) => '<i class="' + (cur.pay[i] ? 'g' : '') + '"></i>').join('');
   let h = '<div class="mlab">CURRENT MONTH</div><div class="curcard"><div class="ct">' + MONTHS[cur.month].toUpperCase() + ' ' + cur.year + '</div><div class="cs">' + n + ' of 10 paid · ' + fmt(cur.amount) + ' BDT each' + (cur.due ? '<br>Payment before ' + dueTxt(cur.due) : '') + '</div><div class="cdots">' + dots + '</div><button class="cb" data-mgo="1">Go to update</button></div>';
   h += '<div class="mlab" style="margin-top:22px">PREVIOUS MONTHS</div>';
-  h += prev.length ? prev.map(x => '<div class="pvcard"><div><b>' + MONTHS[x.month].toUpperCase() + ' ' + x.year + '</b><small>' + Object.keys(x.pay).length + ' of 10 paid · ' + fmt(x.amount) + ' BDT each</small></div><div class="pvb"><button class="sb" data-mopen="' + x.id + '">Open</button><button class="sb dng" data-mdel="' + x.id + '">Delete</button></div></div>').join('') : '<div class="empty">No previous months yet.</div>';
+  const pvCard = x => '<div class="pvcard"><div><b>' + MONTHS[x.month].toUpperCase() + ' ' + x.year + '</b><small>' + Object.keys(x.pay).length + ' of 10 paid · ' + fmt(x.amount) + ' BDT each</small></div><div class="pvb"><button class="sb" data-mopen="' + x.id + '">Open</button><button class="sb dng" data-mdel="' + x.id + '">Delete</button></div></div>';
+  const curIdx = cur.year * 12 + cur.month;
+  const groups = rcpWindows().map(w => ({ w: w, items: prev.filter(x => { const v = x.year * 12 + x.month; return v >= w.st && v <= w.st + 11; }) })).filter(g => g.items.length).reverse();
+  h += groups.length ? groups.map(g => {
+    const k = g.w.k, op = (k in MGST) ? MGST[k] : (curIdx >= g.w.st && curIdx <= g.w.st + 11), pn = g.items.reduce((a, x) => a + Object.keys(x.pay).length, 0);
+    return '<button class="pvg' + (op ? ' o' : '') + '" data-mgrp="' + k + '" data-open="' + (op ? 1 : 0) + '"><span><b>' + g.w.label.toUpperCase() + '</b><small>' + g.items.length + (g.items.length > 1 ? ' months' : ' month') + ' · ' + pn + ' of ' + (g.items.length * 10) + ' paid</small></span><span class="cv"></span></button>' + (op ? '<div class="pvgb">' + g.items.map(pvCard).join('') + '</div>' : '');
+  }).join('') : '<div class="empty">No previous months yet.</div>';
   $('mmList').innerHTML = h;
 }
 function mRenderMore() {
@@ -1914,6 +1924,7 @@ $('mm').addEventListener('click', e => {
   }
 });
 $('mmList').addEventListener('click', async e => {
+  const gh = e.target.closest('[data-mgrp]'); if (gh) { MGST[+gh.dataset.mgrp] = gh.dataset.open !== '1'; mRenderMonths(); return; }
   if (e.target.dataset.mgo) { showMTab('update'); return; }
   const o = e.target.dataset.mopen, d = e.target.dataset.mdel;
   if (o) { VIEWM = +o; document.body.classList.add('marc'); mRenderAll(); showMTab('update'); return; }
